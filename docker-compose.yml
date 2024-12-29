@@ -7,6 +7,8 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
     volumes:
       - .:/app
+    networks:
+      - bot-network
     ports:
       - "80:80"
       - "443:443"
