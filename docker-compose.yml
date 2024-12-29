@@ -9,7 +9,7 @@ services:
       - .:/app
     ports:
       - "8080:8080"
-    command: ["python", "bot.py"]
+    command: ["python", "main.py"]
     logging:
       driver: "json-file"
       options:
