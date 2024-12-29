@@ -1,0 +1,6 @@
+discord
+discord[voice]
+python-dotenv
+PyNaCl
+pytubefix
+colorlog
