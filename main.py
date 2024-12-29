@@ -109,7 +109,8 @@ class GuildMusicQueue():
 
         audio_source = discord.FFmpegPCMAudio(
             audio_buffer,
-            pipe=True
+            pipe=True,
+            executable='./ffmpeg.exe'
         )
 
         self.voiceClient.play(audio_source, after=self.start_next)
