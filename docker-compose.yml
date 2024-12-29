@@ -8,7 +8,10 @@ services:
     volumes:
       - .:/app
     ports:
+      - "80:80"
+      - "443:443"
       - "8080:8080"
+      - "50000-65535:50000-65535/udp"
     command: ["python", "main.py"]
     logging:
       driver: "json-file"
