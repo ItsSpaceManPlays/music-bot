@@ -17,6 +17,8 @@ song_buffer: dict[str, io.BytesIO] = {}
 guild_music_roles: dict[int, discord.Role] = {} # guild_id: discord.Role
 
 logger = logging.getLogger('discord')
+logging.getLogger('discord.voice_state').setLevel(logging.WARNING)
+logging.getLogger('discord.player').setLevel(logging.WARNING)
 
 class Song():
     def __init__(self, youtube_link: str):
@@ -106,7 +108,6 @@ class GuildMusicQueue():
     
     async def play_song(self, song: Song):
         if not song:
-            logger.warning("No song to play")
             await self.main_message.edit(embed=bot_embeds.song_stopped(), view=None)
 
             # no songs left so set stuff to None
@@ -242,7 +243,7 @@ async def can_use_command(member: discord.Member):
 
 @bot.event
 async def on_ready():
-    logger.info("Gang we locked and loaded")
+    logger.info("Bot is online")
     try:
         await bot.tree.sync()
     except Exception as e:
