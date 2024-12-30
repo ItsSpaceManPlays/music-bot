@@ -253,12 +253,18 @@ async def on_ready():
         guild_music_roles[guild.id] = db_handler.get_music_role(bot, guild.id)
 
 @bot.tree.command(name="play", description="Play a youtube video")
-async def play(interaction: discord.Interaction, video: str, channel: discord.VoiceChannel):
+async def play(interaction: discord.Interaction, video: str, channel: discord.VoiceChannel = None):
     m_queue = music_queues.setdefault(interaction.guild.id, GuildMusicQueue(interaction.guild, None, channel))
 
     if not await can_use_command(interaction.user):
         await interaction.response.send_message(embed=bot_embeds.not_view_owner(), ephemeral=True)
         return
+    
+    if not channel and not m_queue.defaultChannel and not interaction.user.voice and not interaction.user.voice.channel:
+        await interaction.response.send_message(embed=bot_embeds.no_song(), ephemeral=True)
+        return
+
+    channel = m_queue.defaultChannel or channel or interaction.user.voice.channel
 
     if m_queue.queue.qsize() < 1 and not m_queue.is_playing_song():
         song = Song(video)
@@ -298,11 +304,11 @@ async def search(interaction: discord.Interaction, query: str, channel: discord.
     # get first result
     video = search_results.videos[0]
 
-    if not channel and not m_queue.defaultChannel:
+    if not channel and not m_queue.defaultChannel and not interaction.user.voice and not interaction.user.voice.channel:
         await interaction.response.send_message(embed=bot_embeds.no_song(), ephemeral=True)
         return
     
-    channel = m_queue.defaultChannel or channel
+    channel = m_queue.defaultChannel or channel or interaction.user.voice.channel
 
     song = Song(video.watch_url)
     m_queue.add_song(song)
