@@ -287,7 +287,6 @@ async def play(interaction: discord.Interaction, video: str, channel: discord.Vo
     m_queue.main_message = await interaction.followup.send(embed=bot_embeds.now_playing(song.yt.title, song.yt.author), view=MusicView(m_queue, interaction.user))
 
 # use pytubefix Search to find videos and play the first one
-# TODO: Fix this command
 @bot.tree.command(name="search", description="Search youtube for a video to play")
 async def search(interaction: discord.Interaction, query: str, channel: discord.VoiceChannel = None):
     m_queue = music_queues.setdefault(interaction.guild.id, GuildMusicQueue(interaction.guild, None, channel))
