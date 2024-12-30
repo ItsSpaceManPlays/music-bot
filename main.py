@@ -102,8 +102,8 @@ class GuildMusicQueue():
         else:
             logger.info("No songs left in queue")
             if self.voiceClient:
-                asyncio.run_coroutine_threadsafe(self.play_song(song), bot.loop)
                 asyncio.run_coroutine_threadsafe(self.voiceClient.disconnect(), bot.loop)
+            asyncio.run_coroutine_threadsafe(self.play_song(song), bot.loop)
 
     
     async def play_song(self, song: Song):
@@ -392,7 +392,7 @@ async def queue(interaction: discord.Interaction):
 
 @bot.tree.command(name="musicrole", description="Set a role that can control the music bot")
 async def musicrole(interaction: discord.Interaction, role: discord.Role):
-    if not interaction.user.guild_permissions.administrator:
+    if not interaction.user.guild_permissions.administrator and not interaction.user.guild_permissions.manage_guild:
         await interaction.response.send_message(embed=bot_embeds.not_admin(), ephemeral=True)
         return
 
