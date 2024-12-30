@@ -272,6 +272,8 @@ async def play(interaction: discord.Interaction, video: str, channel: discord.Vo
         return
     await interaction.response.defer()
 
+    m_queue.defaultChannel = m_queue.defaultChannel or channel
+
     play_thread = threading.Thread(target=m_queue.start_next)
     play_thread.start()
     
