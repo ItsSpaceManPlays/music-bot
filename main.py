@@ -87,6 +87,10 @@ class GuildMusicQueue():
         return None
     
     def start_next(self, error = None):
+        if error:
+            logger.error(f"Error playing song: {error}")
+            return
+
         song = self.get_next_song()
         if song:
             logger.info(f"Found next song {song.yt.title}")
@@ -94,13 +98,21 @@ class GuildMusicQueue():
             if self.main_message:
                 asyncio.run_coroutine_threadsafe(self.main_message.edit(embed=bot_embeds.now_playing(song.yt.title, song.yt.author)), bot.loop)
         else:
+            logger.info("No songs left in queue")
             if self.voiceClient:
                 asyncio.run_coroutine_threadsafe(self.play_song(song), bot.loop)
                 asyncio.run_coroutine_threadsafe(self.voiceClient.disconnect(), bot.loop)
+
     
     async def play_song(self, song: Song):
         if not song:
+            logger.warning("No song to play")
             await self.main_message.edit(embed=bot_embeds.song_stopped(), view=None)
+
+            # no songs left so set stuff to None
+            self.main_message = None
+            self.main_message_owner = None
+            self.defaultChannel = None
             return
         
         await self.join_voice_channel()
@@ -158,7 +170,7 @@ class MusicView(discord.ui.View):
 
         self.m_queue.skip()
 
-        await interaction.response.send_message(embed=bot_embeds.skipped_song(songs - 1), ephemeral=True)
+        await interaction.response.send_message(embed=bot_embeds.skipped_song(max(songs - 1, 0)), ephemeral=True)
 
     @discord.ui.button(label="🛑 Stop", style=discord.ButtonStyle.danger)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -179,6 +191,7 @@ class MusicView(discord.ui.View):
         await interaction.response.send_message(embed=bot_embeds.song_stopped(), ephemeral=True)
         self.m_queue.main_message = None
         self.m_queue.main_message_owner = None
+        self.m_queue.defaultChannel = None
 
     @discord.ui.button(label="⏸️ Pause", style=discord.ButtonStyle.green)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -257,7 +270,6 @@ async def play(interaction: discord.Interaction, video: str, channel: discord.Vo
         await m_queue.main_message.edit(embed=bot_embeds.add_song(song.yt.title, song.yt.author, q_pos))
         await interaction.response.send_message(embed=bot_embeds.song_added(), ephemeral=True)
         return
-
     await interaction.response.defer()
 
     play_thread = threading.Thread(target=m_queue.start_next)
@@ -266,6 +278,7 @@ async def play(interaction: discord.Interaction, video: str, channel: discord.Vo
     m_queue.main_message = await interaction.followup.send(embed=bot_embeds.now_playing(song.yt.title, song.yt.author), view=MusicView(m_queue, interaction.user))
 
 # use pytubefix Search to find videos and play the first one
+# TODO: Fix this command
 @bot.tree.command(name="search", description="Search youtube for a video to play")
 async def search(interaction: discord.Interaction, query: str, channel: discord.VoiceChannel = None):
     m_queue = music_queues.setdefault(interaction.guild.id, GuildMusicQueue(interaction.guild, None, channel))
@@ -289,18 +302,18 @@ async def search(interaction: discord.Interaction, query: str, channel: discord.
     
     channel = m_queue.defaultChannel or channel
 
-    if m_queue.queue.qsize() < 1 and not m_queue.is_playing_song():
-        song = Song(video.watch_url)
-        m_queue.add_song(song)
-    else:
-        song = Song(video.watch_url)
-        m_queue.add_song(song)
+    song = Song(video.watch_url)
+    m_queue.add_song(song)
+
+    if m_queue.queue.qsize() > 1 or m_queue.is_playing_song():
         q_pos = m_queue.queue.qsize()
         await m_queue.main_message.edit(embed=bot_embeds.add_song(song.yt.title, song.yt.author, q_pos))
         await interaction.response.send_message(embed=bot_embeds.song_added(), ephemeral=True)
         return
     
     await interaction.response.defer()
+
+    m_queue.defaultChannel = channel
 
     play_thread = threading.Thread(target=m_queue.start_next)
     play_thread.start()
@@ -343,6 +356,7 @@ async def stop(interaction: discord.Interaction):
             await m_queue.main_message.edit(embed=bot_embeds.song_stopped(), view=None)
             m_queue.main_message = None
             m_queue.main_message_owner = None
+            m_queue.defaultChannel = None
     await interaction.followup.send(embed=bot_embeds.song_stopped())
 
 @bot.tree.command(name="queue", description="Look at the current song queue")
