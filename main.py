@@ -226,7 +226,7 @@ class MusicView(discord.ui.View):
 
 
 async def can_use_command(member: discord.Member):
-    if member.guild_permissions.administrator:
+    if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
         return True
     
     if m_queue := music_queues.get(member.guild.id):
