@@ -242,6 +242,11 @@ async def can_use_command(member: discord.Member):
     return False
 
 @bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.CommandNotFound):
+        return
+
+@bot.event
 async def on_ready():
     logger.info("Bot is online")
     try:

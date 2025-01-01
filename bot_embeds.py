@@ -53,3 +53,6 @@ def music_role_set(role: Role):
 
 def no_search_results():
     return Embed(color=0xb90505, title="No search results", description="No results found for the search query")
+
+def command_not_found():
+    return Embed(color=0xb90505, title="Command not found", description="The command you entered does not exist")
